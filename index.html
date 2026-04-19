@@ -229,16 +229,6 @@
             text-transform: uppercase;
             opacity: 0.82;
         }
-        .scene-whisper {
-            margin: 0;
-            max-width: 30ch;
-            font-family: 'Caveat', cursive;
-            font-size: clamp(24px, 3.3vw, 34px);
-            line-height: 1.15;
-            color: #ead8b0;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(230, 206, 154, 0.18);
-        }
-        
         #loading { font-family: 'Caveat', cursive; font-size: 24px; color: #fcebc4; position: absolute; top: 120px; left: 50%; transform: translateX(-50%); animation: breathe 1.5s infinite ease-in-out; text-shadow: 0 2px 5px #000; z-index: 11;}
         @keyframes breathe { 0%, 100% { opacity: 0.4; text-shadow: 0 0 5px #fcebc4; } 50% { opacity: 1; text-shadow: 0 0 20px #fcebc4; } }
 
@@ -324,7 +314,6 @@
     <div class="top-bar" id="main-ui">
         <h1>Astronomy Tower</h1>
         <div class="scene-kicker">Starwatch Above The Keep</div>
-        <p class="scene-whisper" id="scene-whisper">The battlements wait beneath a listening sky.</p>
     </div>
     <div id="loading">The tower is waking...</div>
 
@@ -659,7 +648,6 @@
         const manuText = document.getElementById('manu-text');
         const mainUI = document.getElementById('main-ui');
         const castle = document.getElementById('castle-silhouette');
-        const sceneWhisper = document.getElementById('scene-whisper');
 
         window.addEventListener('mousemove', (event) => {
             if(isFocused) return; 
@@ -939,44 +927,7 @@
             });
         }
 
-        function updateSceneWhisper() {
-            const copyMap = {
-                Night: {
-                    Clear: 'Moonlight drifts across the far towers and the sky keeps its counsel.',
-                    Rain: 'Rain needles the dark stone while the tower listens in silence.',
-                    Snow: 'Snow gathers on the parapets until the whole keep glows pale.',
-                    Fog: 'Mist swallows the lower roofs and leaves only the highest spires awake.'
-                },
-                Dawn: {
-                    Clear: 'The first gold gathers on the battlements before the world below stirs.',
-                    Rain: 'A soft storm passes through the dawn and turns the keep to silver.',
-                    Snow: 'Morning light catches in the snow and the castle exhales slowly.',
-                    Fog: 'Dawn presses through the haze and sketches the castle back into being.'
-                },
-                Day: {
-                    Clear: 'Bright air hangs over the stone heights and every tower stands watchful.',
-                    Rain: 'Cloud-shadow and rain move over the roofs like a passing omen.',
-                    Snow: 'Even under daylight, the snowy towers feel lifted out of time.',
-                    Fog: 'The day remains hushed, with the lower valley lost beneath white cloud.'
-                },
-                Dusk: {
-                    Clear: 'The last amber light settles on the keep before the stars return.',
-                    Rain: 'Dusk darkens the rain and the castle windows begin to answer back.',
-                    Snow: 'Twilight folds into the snow until the whole ridge turns luminous.',
-                    Fog: 'At dusk the mist climbs higher, and the castle becomes a rumor of stone.'
-                }
-            };
-            const stateCopy = copyMap[timeState] || copyMap.Night;
-            sceneWhisper.textContent = stateCopy[currentWeatherType] || stateCopy.Clear;
-        }
-
-        // ================= 9. 真实数据同步 =================
-        function getTimeState(hour) {
-            if(hour >= 5 && hour < 7) return 'Dawn';
-            if(hour >= 7 && hour < 17) return 'Day';
-            if(hour >= 17 && hour < 19) return 'Dusk';
-            return 'Night';
-        }
+        // ================= 9. 实时天气同步（天空固定为夜晚） =================
 
         function describeWeatherCode(code) {
             if(code === 0) return 'Clear';
@@ -1026,25 +977,21 @@
                 const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 const weatherData = await weatherRes.json(); const cur = weatherData.current_weather;
                 if(!cur) throw new Error('Missing current_weather payload');
-                const { hour } = getZonedTimeParts(tz);
-                timeState = getTimeState(hour);
+                timeState = 'Night';
 
                 const weatherCode = cur?.weathercode ?? 0;
                 currentWeatherType = getWeatherVisualType(weatherCode);
 
                 document.getElementById('loading').style.display = 'none';
                 updateVisuals();
-                updateSceneWhisper();
 
             } catch (e) { 
                 console.error(e);
                 document.getElementById('loading').innerHTML = "The veil remains still";
-                updateSceneWhisper();
             }
         }
 
         updateVisuals();
-        updateSceneWhisper();
         loadRealTimeData();
 
     </script>
