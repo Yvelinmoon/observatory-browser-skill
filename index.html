@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astronomy Tower - Crisp Telescope</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; color: #e6ce9a; user-select: none; background: #000; }
+        
+        /* 🌅 四时流转的渐变天空层 */
+        .sky-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; opacity: 0; transition: opacity 2s ease-in-out; }
+        #sky-night { background: linear-gradient(to bottom, #040914 0%, #0a1326 40%, #152238 100%); } 
+        #sky-dawn  { background: linear-gradient(to bottom, #1a2245 0%, #46345c 40%, #a36166 70%, #df9c82 100%); }
+        #sky-day   { background: linear-gradient(to bottom, #3b82c4 0%, #72b2e4 40%, #a4d5f5 70%, #d8eeff 100%); }
+        #sky-dusk  { background: linear-gradient(to bottom, #161c38 0%, #3d2952 40%, #824250 70%, #c46a56 100%); }
+
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; z-index: 1; }
+        
+        /* ⛰️ 远山与城堡中景 */
+        #castle-silhouette { 
+            position: absolute; 
+            bottom: 0; 
+            right: 0;
+            width: 100vw;
+            height: 38vh;
+            z-index: 5; 
+            pointer-events: none; 
+            transition: filter 1.5s ease, opacity 0.8s ease; 
+            overflow: hidden;
+        }
+        .mountain-layer {
+            position: absolute;
+            inset: auto 0 0 0;
+            width: 100%;
+            transform-origin: bottom center;
+        }
+        .mountain-back {
+            height: 78%;
+            background: linear-gradient(to top, rgba(9, 15, 28, 0.96), rgba(18, 31, 53, 0.75));
+            clip-path: polygon(0% 100%, 0% 68%, 7% 62%, 13% 70%, 21% 54%, 29% 63%, 38% 45%, 46% 60%, 54% 40%, 62% 57%, 71% 43%, 79% 59%, 87% 47%, 94% 58%, 100% 51%, 100% 100%);
+            filter: blur(1px);
+            opacity: 0.9;
+        }
+        .mountain-front {
+            height: 100%;
+            background: linear-gradient(to top, rgba(3, 8, 18, 0.98), rgba(15, 20, 36, 0.88));
+            clip-path: polygon(0% 100%, 0% 80%, 6% 76%, 12% 84%, 20% 64%, 28% 79%, 35% 58%, 43% 74%, 51% 48%, 58% 66%, 66% 52%, 74% 73%, 82% 57%, 89% 72%, 96% 61%, 100% 67%, 100% 100%);
+            box-shadow: inset 0 18px 30px rgba(110, 150, 210, 0.08);
+        }
+        .mountain-haze {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 42%;
+            background: linear-gradient(to top, rgba(12, 25, 48, 0.42), rgba(12, 25, 48, 0));
+        }
+        .castle-ridge {
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 52%;
+            background: linear-gradient(to top, rgba(5, 9, 19, 0.98), rgba(11, 18, 34, 0.9));
+            clip-path: polygon(0% 100%, 0% 92%, 8% 88%, 15% 90%, 24% 78%, 32% 83%, 39% 72%, 46% 76%, 54% 66%, 62% 73%, 69% 62%, 76% 69%, 84% 58%, 91% 63%, 100% 55%, 100% 100%);
+            box-shadow: inset 0 12px 26px rgba(138, 178, 235, 0.07);
+        }
+        .castle-outline {
+            position: absolute;
+            right: 12%;
+            bottom: 12%;
+            width: 32vw;
+            min-width: 280px;
+            max-width: 520px;
+            height: 68%;
+            opacity: 0.95;
+            filter: drop-shadow(0 0 22px rgba(111, 149, 214, 0.1));
+        }
+        .castle-body,
+        .castle-tower,
+        .castle-spire,
+        .castle-wall,
+        .castle-keep,
+        .castle-bastion,
+        .castle-bridge {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(6, 10, 20, 0.98), rgba(20, 28, 48, 0.86));
+            box-shadow: inset 0 1px 0 rgba(180, 210, 255, 0.08);
+        }
+        .castle-body {
+            left: 29%;
+            width: 42%;
+            height: 42%;
+            clip-path: polygon(0 100%, 0 18%, 18% 18%, 18% 8%, 34% 8%, 34% 0, 66% 0, 66% 8%, 82% 8%, 82% 18%, 100% 18%, 100% 100%);
+        }
+        .castle-wall.left {
+            left: 14%;
+            width: 18%;
+            height: 24%;
+            clip-path: polygon(0 100%, 0 20%, 12% 20%, 12% 0, 30% 0, 30% 20%, 46% 20%, 46% 0, 64% 0, 64% 20%, 82% 20%, 82% 0, 100% 0, 100% 100%);
+        }
+        .castle-wall.right {
+            right: 14%;
+            width: 18%;
+            height: 24%;
+            clip-path: polygon(0 100%, 0 0, 18% 0, 18% 20%, 36% 20%, 36% 0, 54% 0, 54% 20%, 70% 20%, 70% 0, 88% 0, 88% 20%, 100% 20%, 100% 100%);
+        }
+        .castle-keep {
+            left: 35%;
+            width: 30%;
+            height: 30%;
+            clip-path: polygon(0 100%, 0 20%, 14% 20%, 14% 8%, 28% 8%, 28% 0, 72% 0, 72% 8%, 86% 8%, 86% 20%, 100% 20%, 100% 100%);
+            background: linear-gradient(to top, rgba(10, 15, 30, 0.99), rgba(31, 42, 69, 0.9));
+        }
+        .castle-bastion.left {
+            left: 8%;
+            width: 16%;
+            height: 18%;
+            clip-path: polygon(0 100%, 0 14%, 18% 14%, 18% 0, 38% 0, 38% 14%, 58% 14%, 58% 0, 78% 0, 78% 14%, 100% 14%, 100% 100%);
+        }
+        .castle-bastion.right {
+            right: 8%;
+            width: 16%;
+            height: 18%;
+            clip-path: polygon(0 100%, 0 14%, 22% 14%, 22% 0, 42% 0, 42% 14%, 62% 14%, 62% 0, 82% 0, 82% 14%, 100% 14%, 100% 100%);
+        }
+        .castle-bridge {
+            left: 19%;
+            width: 62%;
+            height: 8%;
+            bottom: 9%;
+            clip-path: polygon(0 100%, 4% 36%, 20% 24%, 43% 18%, 57% 18%, 80% 24%, 96% 36%, 100% 100%);
+            background: linear-gradient(to top, rgba(12, 18, 34, 0.94), rgba(35, 46, 70, 0.72));
+        }
+        .castle-tower.left {
+            left: 18%;
+            width: 12%;
+            height: 58%;
+            clip-path: polygon(0 100%, 0 8%, 18% 8%, 18% 0, 34% 0, 34% 8%, 50% 8%, 50% 0, 66% 0, 66% 8%, 82% 8%, 82% 0, 100% 0, 100% 100%);
+        }
+        .castle-tower.center {
+            left: 43%;
+            width: 14%;
+            height: 72%;
+            clip-path: polygon(0 100%, 0 8%, 14% 8%, 14% 0, 32% 0, 32% 8%, 50% 8%, 50% 0, 68% 0, 68% 8%, 86% 8%, 86% 0, 100% 0, 100% 100%);
+        }
+        .castle-tower.right {
+            right: 18%;
+            width: 12%;
+            height: 54%;
+            clip-path: polygon(0 100%, 0 8%, 18% 8%, 18% 0, 34% 0, 34% 8%, 50% 8%, 50% 0, 66% 0, 66% 8%, 82% 8%, 82% 0, 100% 0, 100% 100%);
+        }
+        .castle-spire.left {
+            left: 17.5%;
+            width: 13%;
+            height: 78%;
+            clip-path: polygon(50% 0, 82% 28%, 82% 100%, 18% 100%, 18% 28%);
+        }
+        .castle-spire.center {
+            left: 42%;
+            width: 16%;
+            height: 96%;
+            clip-path: polygon(50% 0, 84% 26%, 84% 100%, 16% 100%, 16% 26%);
+        }
+        .castle-spire.right {
+            right: 17.5%;
+            width: 13%;
+            height: 74%;
+            clip-path: polygon(50% 0, 82% 28%, 82% 100%, 18% 100%, 18% 28%);
+        }
+        .castle-window {
+            position: absolute;
+            bottom: 18%;
+            width: 6px;
+            height: 14px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, rgba(255, 231, 166, 0.9), rgba(255, 210, 120, 0.2));
+            box-shadow: 0 0 10px rgba(255, 223, 140, 0.32);
+            opacity: 0.75;
+        }
+        .castle-window.w1 { left: 34%; }
+        .castle-window.w2 { left: 48.5%; bottom: 28%; height: 18px; }
+        .castle-window.w3 { right: 34%; }
+        .castle-window.w4 { left: 22%; bottom: 21%; }
+        .castle-window.w5 { right: 22%; bottom: 21%; }
+        .castle-window.w6 { left: 49.5%; bottom: 48%; height: 16px; }
+        .castle-mist {
+            position: absolute;
+            left: -5%;
+            bottom: 0;
+            width: 110%;
+            height: 26%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(135, 170, 220, 0.08), transparent 34%),
+                radial-gradient(circle at 58% 56%, rgba(135, 170, 220, 0.12), transparent 30%),
+                radial-gradient(circle at 83% 44%, rgba(135, 170, 220, 0.08), transparent 32%);
+            filter: blur(14px);
+        }
+
+        /* ✨ 沉浸式标题 */
+        .top-bar { 
+            position: absolute;
+            top: 34px;
+            left: 34px;
+            width: min(460px, calc(100vw - 68px));
+            z-index: 10; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            transition: opacity 0.5s ease; 
+        }
+        
+        .top-bar h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(42px, 7vw, 68px);
+            font-weight: normal;
+            margin: 0;
+            color: #fcebc4;
+            text-shadow: 0 0 25px rgba(252, 235, 196, 0.8), 0 2px 5px rgba(0,0,0,0.8);
+        }
+        .scene-kicker {
+            font: 600 11px/1.2 sans-serif;
+            color: #b7c7da;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0.82;
+        }
+        .scene-whisper {
+            margin: 0;
+            max-width: 30ch;
+            font-family: 'Caveat', cursive;
+            font-size: clamp(24px, 3.3vw, 34px);
+            line-height: 1.15;
+            color: #ead8b0;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(230, 206, 154, 0.18);
+        }
+        
+        #loading { font-family: 'Caveat', cursive; font-size: 24px; color: #fcebc4; position: absolute; top: 120px; left: 50%; transform: translateX(-50%); animation: breathe 1.5s infinite ease-in-out; text-shadow: 0 2px 5px #000; z-index: 11;}
+        @keyframes breathe { 0%, 100% { opacity: 0.4; text-shadow: 0 0 5px #fcebc4; } 50% { opacity: 1; text-shadow: 0 0 20px #fcebc4; } }
+
+        /* 🔮 悬停提示框 */
+        #hover-tooltip { 
+            position: absolute; z-index: 100; 
+            background: rgba(5, 8, 15, 0.7); 
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3); 
+            border-radius: 12px; padding: 15px 25px; pointer-events: none; opacity: 0; transform: scale(0.9); 
+            transition: opacity 0.2s ease, transform 0.2s ease; backdrop-filter: blur(8px); 
+            border: none;
+        }
+        #hover-tooltip.visible { opacity: 1; transform: scale(1); }
+        #hover-tooltip .hint { font-family: sans-serif; font-size: 10px; color: #8ba3ba; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; text-align: right; }
+
+        /* 🔭 望远镜遮罩 */
+        #telescope-mask {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 150; pointer-events: none; opacity: 0;
+            background: radial-gradient(circle at 35% 50%, transparent 22%, rgba(0, 0, 0, 0.95) 23.5%, #000 100%);
+            transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        #telescope-mask.active { opacity: 1; pointer-events: auto; }
+
+        /* 📜 旁侧手稿 */
+        #focus-manuscript {
+            position: absolute;
+            top: 50%; right: 8%; transform: translateY(-50%) translateX(40px);
+            width: 450px; max-width: 40vw;
+            background: transparent;
+            padding: 40px 20px;
+            z-index: 200; opacity: 0; pointer-events: none;
+            transition: opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s;
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+        #focus-manuscript.active { opacity: 1; transform: translateY(-50%) translateX(0); pointer-events: auto; }
+        
+        .manu-title { font-family: 'Great Vibes', cursive; font-size: 64px; color: #fcebc4; margin: 0 0 5px 0; text-shadow: 0 0 30px rgba(212, 175, 55, 0.8); }
+        .manu-subtitle { font-family: sans-serif; font-size: 12px; color: #d4af37; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 25px; width: 100%; border-bottom: 1px solid rgba(212, 175, 55, 0.4); padding-bottom: 15px;}
+        .manu-text { font-family: 'Caveat', cursive; font-size: 26px; color: #e6ce9a; line-height: 1.4; text-align: justify; margin-bottom: 45px; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
+        
+        .btn-close { 
+            background: transparent; border: none; 
+            color: #d4af37; font-family: sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; 
+            padding: 10px 0; cursor: pointer; transition: all 0.3s ease; 
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+        }
+        .btn-close:hover { color: #fff; text-shadow: 0 0 15px #fcebc4; border-bottom: 1px solid #fcebc4; }
+
+        @media (max-width: 760px) {
+            .top-bar {
+                top: 24px;
+                left: 20px;
+                width: min(320px, calc(100vw - 40px));
+            }
+            #castle-silhouette {
+                height: 32vh;
+            }
+            .castle-outline {
+                right: 3%;
+                width: 58vw;
+                min-width: 220px;
+                height: 60%;
+            }
+            #focus-manuscript {
+                right: 20px;
+                width: calc(100vw - 40px);
+                max-width: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 🌅 四时流转天空层 -->
+    <div id="sky-night" class="sky-layer"></div>
+    <div id="sky-dawn" class="sky-layer"></div>
+    <div id="sky-day" class="sky-layer"></div>
+    <div id="sky-dusk" class="sky-layer"></div>
+
+    <!-- ✨ 沉浸式标题 -->
+    <div class="top-bar" id="main-ui">
+        <h1>Astronomy Tower</h1>
+        <div class="scene-kicker">Starwatch Above The Keep</div>
+        <p class="scene-whisper" id="scene-whisper">The battlements wait beneath a listening sky.</p>
+    </div>
+    <div id="loading">The tower is waking...</div>
+
+    <!-- 悬停提示框 -->
+    <div id="hover-tooltip">
+        <h2 id="tooltip-title" style="font-family:'Great Vibes'; font-size:36px; color:#fcebc4; margin:0; text-shadow: 0 0 15px rgba(212,175,55,0.8);">Name</h2>
+        <div style="height: 1px; background: linear-gradient(90deg, rgba(230, 206, 154, 0.6), transparent); margin: 5px 0; width:100%;"></div>
+        <div class="hint">Click to focus telescope</div>
+    </div>
+
+    <!-- 🔭 望远镜遮罩 -->
+    <div id="telescope-mask"></div>
+
+    <!-- 📜 聚焦侧边手稿 -->
+    <div id="focus-manuscript">
+        <h2 class="manu-title" id="manu-title">Constellation</h2>
+        <div class="manu-subtitle" id="manu-subtitle">The Title</div>
+        <p class="manu-text" id="manu-text">Detailed lore goes here...</p>
+        <button class="btn-close" onclick="exitFocus()">Lower Telescope</button>
+    </div>
+
+    <!-- 远山背景 -->
+    <div id="castle-silhouette" aria-hidden="true">
+        <div class="mountain-layer mountain-back"></div>
+        <div class="mountain-layer mountain-front"></div>
+        <div class="mountain-haze"></div>
+        <div class="castle-ridge"></div>
+        <div class="castle-outline">
+            <div class="castle-bastion left"></div>
+            <div class="castle-bastion right"></div>
+            <div class="castle-bridge"></div>
+            <div class="castle-wall left"></div>
+            <div class="castle-wall right"></div>
+            <div class="castle-body"></div>
+            <div class="castle-keep"></div>
+            <div class="castle-tower left"></div>
+            <div class="castle-tower center"></div>
+            <div class="castle-tower right"></div>
+            <div class="castle-spire left"></div>
+            <div class="castle-spire center"></div>
+            <div class="castle-spire right"></div>
+            <div class="castle-window w1"></div>
+            <div class="castle-window w2"></div>
+            <div class="castle-window w3"></div>
+            <div class="castle-window w4"></div>
+            <div class="castle-window w5"></div>
+            <div class="castle-window w6"></div>
+            <div class="castle-mist"></div>
+        </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // ================= 1. 主场景与双摄渲染管线 =================
+        const container = document.getElementById('canvas-container');
+        
+        // 主场景有雾，产生朦胧远近感
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a1326, 0.001); 
+
+        // HUD场景无雾，用于绝对清晰的前景投影
+        const hudScene = new THREE.Scene();
+
+        const defaultFOV = 60;
+        const camera = new THREE.PerspectiveCamera(defaultFOV, window.innerWidth / window.innerHeight, 0.1, 5000);
+        // hudCamera 同样视野，但渲染距离较近
+        const hudCamera = new THREE.PerspectiveCamera(defaultFOV, window.innerWidth / window.innerHeight, 0.1, 500); 
+        
+        const defaultCameraPos = new THREE.Vector3(0, 0, 1);
+        const defaultTarget = new THREE.Vector3(0, 0, 0);
+        camera.position.copy(defaultCameraPos);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setClearColor(0x000000, 0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.autoClear = false; // 允许多通道叠加
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.copy(defaultTarget);
+        controls.enablePan = false; controls.enableZoom = false; controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.minPolarAngle = Math.PI / 2.5; 
+        controls.maxPolarAngle = Math.PI;     
+
+        const skyDome = new THREE.Group(); 
+        scene.add(skyDome);
+
+        const ambientLight = new THREE.AmbientLight(0x405060, 0.8); scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffee, 1.0); directionalLight.position.set(1000, 1500, 500); scene.add(directionalLight);
+
+        // ================= 2. 高清纹理 =================
+        function createStarTexture(colorStr = '255, 255, 255') {
+            const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128; 
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, `rgba(${colorStr}, 1)`); gradient.addColorStop(0.1, `rgba(${colorStr}, 0.8)`);
+            gradient.addColorStop(0.4, `rgba(${colorStr}, 0.2)`); gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createTextSprite(message) {
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            ctx.font = "Bold 28px 'Caveat', cursive"; ctx.fillStyle = "rgba(252, 235, 196, 0.9)"; ctx.fillText(message, 10, 40);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false }));
+            sprite.scale.set(140, 70, 1); return sprite;
+        }
+
+        // ================= 3. 银河生成 =================
+        let starMaterials =[];
+        function createGalaxy() {
+            const texWhite = createStarTexture('255, 255, 255');
+            const texRed = createStarTexture('255, 150, 150');
+            const texBlue = createStarTexture('150, 200, 255');
+            
+            const smallGeo = new THREE.BufferGeometry(); const smallPos = new Float32Array(15000 * 3);
+            for(let i=0; i<15000*3; i+=3) {
+                const u = Math.random(), v = Math.random(); const phi = Math.acos(2.0 * v - 1.0), theta = u * 2.0 * Math.PI; 
+                smallPos[i] = 1200 * Math.sin(phi) * Math.cos(theta); smallPos[i+1] = 1200 * Math.cos(phi); smallPos[i+2] = 1200 * Math.sin(phi) * Math.sin(theta);
+            }
+            smallGeo.setAttribute('position', new THREE.BufferAttribute(smallPos, 3));
+            const smallMat = new THREE.PointsMaterial({ size: 6, map: texWhite, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+            starMaterials.push(smallMat); skyDome.add(new THREE.Points(smallGeo, smallMat));
+
+            const bigGeo = new THREE.BufferGeometry(); const bigPos = new Float32Array(3000 * 3);
+            for(let i=0; i<3000*3; i+=3) {
+                const u = Math.random(), v = Math.random(); const phi = Math.acos(2.0 * v - 1.0), theta = u * 2.0 * Math.PI; 
+                bigPos[i] = 1000 * Math.sin(phi) * Math.cos(theta); bigPos[i+1] = 1000 * Math.cos(phi); bigPos[i+2] = 1000 * Math.sin(phi) * Math.sin(theta);
+            }
+            bigGeo.setAttribute('position', new THREE.BufferAttribute(bigPos, 3));
+            const bigMat = new THREE.PointsMaterial({ size: 14, map: texWhite, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+            starMaterials.push(bigMat); skyDome.add(new THREE.Points(bigGeo, bigMat));
+
+            const colorGeo = new THREE.BufferGeometry(); const colorPos = new Float32Array(500 * 3);
+            for(let i=0; i<500*3; i+=3) {
+                const u = Math.random(), v = Math.random(); const phi = Math.acos(2.0 * v - 1.0), theta = u * 2.0 * Math.PI; 
+                colorPos[i] = 950 * Math.sin(phi) * Math.cos(theta); colorPos[i+1] = 950 * Math.cos(phi); colorPos[i+2] = 950 * Math.sin(phi) * Math.sin(theta);
+            }
+            colorGeo.setAttribute('position', new THREE.BufferAttribute(colorPos, 3));
+            const matRed = new THREE.PointsMaterial({ size: 24, map: texRed, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+            const matBlue = new THREE.PointsMaterial({ size: 24, map: texBlue, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+            starMaterials.push(matRed, matBlue); 
+            skyDome.add(new THREE.Points(colorGeo.clone().setDrawRange(0, 250), matRed));
+            skyDome.add(new THREE.Points(colorGeo.clone().setDrawRange(250, 250), matBlue));
+        }
+        createGalaxy();
+
+        // ================= 4. 星座系统 (扩充) =================
+        let constellationGroups = []; 
+        let hoveredConstellation = null; 
+        let isFocused = false; 
+        let currentHudObject = null; 
+        const celestialGridMaterials = [];
+
+        // 主场景材质 (受雾气影响，稍模糊)
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.45 });
+        const nodeMat = new THREE.PointsMaterial({ size: 34, map: createStarTexture('255, 230, 150'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+
+        function getPos(phi, theta, radius = 950) { return new THREE.Vector3( radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta) ); }
+        function degToRad(deg) { return deg * Math.PI / 180; }
+        function raDecToVector(raHours, decDeg, radius = 930) {
+            const phi = degToRad(90 - decDeg);
+            const theta = degToRad((raHours / 24) * 360);
+            return getPos(phi, theta, radius);
+        }
+
+        function createCelestialGrid() {
+            const gridGroup = new THREE.Group();
+            const ringMaterial = new THREE.LineBasicMaterial({ color: 0x7d9fcb, transparent: true, opacity: 0.34 });
+            const meridianMaterial = new THREE.LineBasicMaterial({ color: 0x9bbef2, transparent: true, opacity: 0.24 });
+            const equatorMaterial = new THREE.LineBasicMaterial({ color: 0xbdd7ff, transparent: true, opacity: 0.58 });
+            const eclipticMaterial = new THREE.LineBasicMaterial({ color: 0xf0c76b, transparent: true, opacity: 0.62 });
+            celestialGridMaterials.push(ringMaterial, meridianMaterial, equatorMaterial, eclipticMaterial);
+
+            function createAnnotationSprite(text, color = '#dbe8ff', fontSize = 44) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = `600 ${fontSize}px sans-serif`;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, depthTest: false, fog: false, opacity: 0.78 });
+                celestialGridMaterials.push(material);
+                const sprite = new THREE.Sprite(material);
+                sprite.scale.set(70, 17.5, 1);
+                return sprite;
+            }
+
+            const ringDeclinations = [-60, -30, 0, 30, 60];
+            ringDeclinations.forEach(dec => {
+                const points = [];
+                for(let ra = 0; ra <= 48; ra++) points.push(raDecToVector((ra / 48) * 24, dec));
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const ring = new THREE.Line(geometry, (dec === 0 ? equatorMaterial : ringMaterial).clone());
+                celestialGridMaterials.push(ring.material);
+                gridGroup.add(ring);
+
+                const declinationLabel = createAnnotationSprite(`${dec > 0 ? '+' : ''}${dec}°`, dec === 0 ? '#f3f7ff' : '#c6daf8', dec === 0 ? 52 : 42);
+                declinationLabel.position.copy(raDecToVector(18.2, dec, 935));
+                gridGroup.add(declinationLabel);
+            });
+
+            for(let raHour = 0; raHour < 24; raHour += 2) {
+                const points = [];
+                for(let dec = -75; dec <= 75; dec += 5) points.push(raDecToVector(raHour, dec));
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const meridian = new THREE.Line(geometry, meridianMaterial.clone());
+                celestialGridMaterials.push(meridian.material);
+                gridGroup.add(meridian);
+
+                const raLabel = createAnnotationSprite(`${String(raHour).padStart(2, '0')}h`, '#a8cff8', 40);
+                raLabel.position.copy(raDecToVector(raHour, 74, 944));
+                gridGroup.add(raLabel);
+            }
+
+            const eclipticPoints = [];
+            for(let angle = 0; angle <= 360; angle += 4) {
+                const lambda = degToRad(angle);
+                const epsilon = degToRad(23.44);
+                const x = Math.cos(lambda);
+                const y = Math.sin(lambda) * Math.sin(epsilon);
+                const z = Math.sin(lambda) * Math.cos(epsilon);
+                eclipticPoints.push(new THREE.Vector3(x, y, z).multiplyScalar(910));
+            }
+            const eclipticGeo = new THREE.BufferGeometry().setFromPoints(eclipticPoints);
+            gridGroup.add(new THREE.Line(eclipticGeo, eclipticMaterial));
+
+            const northPole = createAnnotationSprite('NCP', '#fff3c6', 40);
+            northPole.position.set(0, 968, 0);
+            gridGroup.add(northPole);
+
+            const southPole = createAnnotationSprite('SCP', '#cfd9f2', 40);
+            southPole.position.set(0, -968, 0);
+            gridGroup.add(southPole);
+
+            const eclipticLabel = createAnnotationSprite('Ecliptic', '#f8d88b', 44);
+            eclipticLabel.position.copy(eclipticPoints[24].clone().multiplyScalar(1.03));
+            gridGroup.add(eclipticLabel);
+
+            skyDome.add(gridGroup);
+        }
+        createCelestialGrid();
+        
+        function createRealConstellations() {
+            const data =[
+                { name: "Ursa Major", title: "The Great Bear", desc: "A cornerstone of the northern hemisphere. Its seven brightest stars forge the 'Big Dipper', a cosmic compass that has unfailingly guided lost wizards toward the steadfast North Star.", points:[ getPos(0.4, 0), getPos(0.45, 0.2), getPos(0.5, 0.35), getPos(0.6, 0.4), getPos(0.65, 0.6), getPos(0.55, 0.7), getPos(0.6, 0.4) ] },
+                { name: "Cassiopeia", title: "The Seated Queen", desc: "Easily recognizable by its distinctive, glittering 'W' shape. Named after the vain and boastful queen in Greek mythology who dared to claim she was more beautiful than the sea nymphs.", points:[ getPos(0.3, 3.14), getPos(0.35, 3.3), getPos(0.3, 3.4), getPos(0.4, 3.5), getPos(0.3, 3.7) ] },
+                { name: "Orion", title: "The Great Hunter", desc: "The undisputed master of the winter sky. The three perfectly aligned stars forming his belt—Alnitak, Alnilam, and Mintaka—were revered by ancient seers as a cosmic gateway.", points:[ getPos(1.4, 1.5), getPos(1.5, 1.6), getPos(1.55, 1.5), getPos(1.6, 1.4), getPos(1.7, 1.3), getPos(1.55, 1.5), getPos(1.4, 1.3), getPos(1.6, 1.4) ] },
+                { name: "Crux", title: "The Southern Cross", desc: "The smallest yet arguably the most culturally significant constellation in the southern skies. Invisible from northern latitudes, its four bright stars have been a crucial navigational guidepost.", points:[ getPos(2.6, 1.0), getPos(2.8, 1.0), getPos(2.7, 1.0), getPos(2.7, 0.9), getPos(2.7, 1.1) ] },
+                { name: "Scorpius", title: "The Venomous Scorpion", desc: "A massive, sweeping shadow creeping across the southern Milky Way. At its heart pulses Antares, a red supergiant whose crimson glow rivals Mars itself.", points:[ getPos(1.9, 4.0), getPos(2.0, 4.1), getPos(2.1, 4.15), getPos(2.2, 4.1), getPos(2.3, 3.9), getPos(2.2, 3.8) ] },
+                { name: "Leo", title: "The Nemean Lion", desc: "A regal zodiac constellation led by the bright blue-white star Regulus (The Little King). It represents the invulnerable, golden-furred Nemean Lion.", points:[ getPos(0.8, 2.3), getPos(0.75, 2.4), getPos(0.8, 2.5), getPos(0.9, 2.6), getPos(1.0, 2.4), getPos(0.8, 2.3) ] },
+                { name: "Cygnus", title: "The Celestial Swan", desc: "Often referred to as the Northern Cross, this majestic bird flies eternally down the glowing, misty plane of the Milky Way.", points:[ getPos(0.5, 5.0), getPos(0.6, 5.1), getPos(0.7, 5.2), getPos(0.6, 5.1), getPos(0.55, 4.9), getPos(0.65, 5.3) ] },
+                { name: "Taurus", title: "The Fierce Bull", desc: "A fierce zodiacal creature holding the bright red giant Aldebaran. Upon its broad shoulder rests the Pleiades (The Seven Sisters) star cluster.", points:[ getPos(1.2, 1.1), getPos(1.3, 1.0), getPos(1.35, 1.2), getPos(1.25, 1.3), getPos(1.2, 1.1) ] },
+                { name: "Sagittarius", title: "The Centaur Archer", desc: "A wise, half-human zodiacal centaur drawing his cosmic bow directly towards the heart of Scorpius. His brightest stars form a famous 'Teapot' shape.", points:[ getPos(2.0, 4.8), getPos(2.1, 4.7), getPos(2.2, 4.8), getPos(2.1, 4.9), getPos(2.0, 4.8) ] },
+                { name: "Gemini", title: "The Celestial Twins", desc: "Representing the mythological half-brothers Castor and Pollux. They were mercifully granted a place in the heavens together so they would never be parted.", points:[ getPos(1.0, 1.9), getPos(1.1, 1.8), getPos(1.2, 1.9), getPos(1.1, 2.0), getPos(1.0, 1.9) ] },
+                { name: "Andromeda", title: "The Chained Princess", desc: "Her boundaries contain the breathtaking Andromeda Galaxy (M31), a massive spiral galaxy destined to collide with our Milky Way eons from now.", points:[ getPos(0.5, 3.5), getPos(0.6, 3.7), getPos(0.7, 4.0) ] },
+                { name: "Lyra", title: "The Lyre", desc: "A small constellation home to Vega, one of the brightest stars in the night sky.", points:[ getPos(0.6, 4.5), getPos(0.65, 4.6), getPos(0.7, 4.5), getPos(0.65, 4.4), getPos(0.6, 4.5) ] },
+                { name: "Pegasus", title: "The Winged Horse", desc: "Born from the blood of Medusa. Its four brightest stars form the 'Great Square of Pegasus'.", points:[ getPos(0.7, 4.0), getPos(0.7, 4.3), getPos(0.9, 4.3), getPos(0.9, 4.0), getPos(0.7, 4.0) ] },
+                { name: "Canis Major", title: "The Great Dog", desc: "The loyal hunting dog of Orion. It is dominated by Sirius, the 'Dog Star', which is the absolute brightest star in Earth's entire night sky.", points:[ getPos(1.8, 1.8), getPos(1.9, 1.9), getPos(2.0, 1.8), getPos(1.9, 1.7), getPos(1.8, 1.8) ] },
+                { name: "Ursa Minor", title: "The Little Bear", desc: "Most famous for holding Polaris (the North Star) at the tip of its tail. It serves as the unmoving anchor around which the entire northern sky dances.", points:[ getPos(0.1, 0), getPos(0.15, 0.5), getPos(0.2, 0.8), getPos(0.25, 0.6), getPos(0.2, 0.4), getPos(0.15, 0.5) ] },
+                { name: "Centaurus", title: "The Centaur", desc: "A bright southern constellation. Contains Alpha Centauri, our closest stellar neighbor system.", points:[ getPos(2.3, 3.5), getPos(2.4, 3.4), getPos(2.5, 3.5), getPos(2.4, 3.6), getPos(2.3, 3.5) ] },
+                { name: "Aquila", title: "The Eagle", desc: "Aquila cuts through the Milky Way with Altair blazing at its heart, one corner of the famous Summer Triangle.", points:[ raDecToVector(19.8, 8), raDecToVector(19.5, 2), raDecToVector(19.9, -1), raDecToVector(20.2, 4), raDecToVector(19.8, 8) ] },
+                { name: "Aquila Minor", title: "The Faint Wing", desc: "A decorative companion asterism added here to thicken the summer river of stars around Aquila.", points:[ raDecToVector(20.4, 9), raDecToVector(20.6, 6), raDecToVector(20.8, 8), raDecToVector(20.4, 9) ] },
+                { name: "Auriga", title: "The Charioteer", desc: "Home to brilliant Capella, Auriga rides high across winter skies with a pentagonal frame of stars.", points:[ raDecToVector(5.1, 46), raDecToVector(5.8, 44), raDecToVector(6.0, 38), raDecToVector(5.4, 34), raDecToVector(4.9, 39), raDecToVector(5.1, 46) ] },
+                { name: "Boötes", title: "The Herdsman", desc: "A wide kite-shaped figure anchored by Arcturus, glowing amber as it chases Ursa Major across spring evenings.", points:[ raDecToVector(14.3, 19), raDecToVector(14.7, 27), raDecToVector(15.1, 33), raDecToVector(15.5, 41), raDecToVector(14.8, 46), raDecToVector(14.3, 19) ] },
+                { name: "Corona Borealis", title: "The Northern Crown", desc: "A delicate jeweled arc near Boötes, often imagined as a circlet suspended in the northern sky.", points:[ raDecToVector(15.1, 25), raDecToVector(15.4, 29), raDecToVector(15.8, 31), raDecToVector(16.1, 30), raDecToVector(16.3, 27) ] },
+                { name: "Draco", title: "The Dragon", desc: "Draco coils between the Bears in a long serpentine line, wrapping around the northern pole like a guardian.", points:[ raDecToVector(12.0, 76), raDecToVector(14.0, 70), raDecToVector(16.0, 66), raDecToVector(17.8, 61), raDecToVector(18.5, 58), raDecToVector(17.0, 52), raDecToVector(15.5, 55) ] },
+                { name: "Hercules", title: "The Kneeling Hero", desc: "Centered on the Keystone asterism, Hercules sprawls broadly between Lyra and Corona Borealis.", points:[ raDecToVector(16.4, 43), raDecToVector(16.8, 39), raDecToVector(17.3, 32), raDecToVector(16.9, 27), raDecToVector(16.2, 30), raDecToVector(16.0, 37), raDecToVector(16.4, 43) ] },
+                { name: "Piscis Austrinus", title: "The Southern Fish", desc: "This low southern figure is best known for Fomalhaut, a solitary beacon near the autumn horizon.", points:[ raDecToVector(22.9, -30), raDecToVector(22.5, -33), raDecToVector(22.2, -29), raDecToVector(22.6, -25), raDecToVector(22.9, -30) ] },
+                { name: "Puppis", title: "The Stern", desc: "One of the surviving fragments of the ancient constellation Argo Navis, stretched along the southern Milky Way.", points:[ raDecToVector(7.5, -20), raDecToVector(7.8, -26), raDecToVector(8.2, -31), raDecToVector(8.5, -36), raDecToVector(8.0, -40) ] },
+                { name: "Vela", title: "The Sails", desc: "Another bright remnant of Argo Navis, its stars drape like sails above the southern horizon.", points:[ raDecToVector(8.8, -40), raDecToVector(9.3, -45), raDecToVector(9.8, -48), raDecToVector(10.2, -43), raDecToVector(9.6, -39) ] },
+                { name: "Carina", title: "The Keel", desc: "Carina carries Canopus, the second-brightest star in the night sky, blazing in the deep south.", points:[ raDecToVector(6.4, -52), raDecToVector(6.8, -57), raDecToVector(7.2, -60), raDecToVector(7.6, -54), raDecToVector(7.0, -49) ] },
+                { name: "Perseus", title: "The Hero Perseus", desc: "A branching northern constellation rich with star fields and myth, poised near Cassiopeia and Andromeda.", points:[ raDecToVector(2.8, 49), raDecToVector(3.1, 43), raDecToVector(3.4, 38), raDecToVector(3.2, 31), raDecToVector(2.7, 35), raDecToVector(2.5, 41), raDecToVector(2.8, 49) ] },
+                { name: "Cepheus", title: "The King", desc: "A house-shaped circumpolar constellation adjacent to Cassiopeia, revolving steadily around Polaris.", points:[ raDecToVector(22.0, 70), raDecToVector(22.6, 66), raDecToVector(23.3, 61), raDecToVector(0.2, 62), raDecToVector(23.8, 69), raDecToVector(22.0, 70) ] }
+            ];
+
+            // 循环生成主场景内的模糊/带透视的星群
+            data.forEach(c => {
+                const group = new THREE.Group();
+                group.userData = { name: c.name, title: c.title, desc: c.desc, isHovered: false };
+                
+                let centroid = new THREE.Vector3(); c.points.forEach(p => centroid.add(p)); centroid.divideScalar(c.points.length);
+                
+                let maxDist = 0;
+                const localPoints = c.points.map(p => {
+                    const loc = p.clone().sub(centroid);
+                    if(loc.length() > maxDist) maxDist = loc.length();
+                    return loc;
+                });
+                group.userData.boundingRadius = maxDist; 
+                group.userData.localPoints = localPoints; // 关键：保存相对坐标给HUD用
+                
+                const geo = new THREE.BufferGeometry().setFromPoints(localPoints);
+                const line = new THREE.Line(geo, lineMat.clone()); 
+                const nodes = new THREE.Points(geo, nodeMat.clone());
+                const label = createTextSprite(c.name); label.position.copy(localPoints[0]); label.position.y += 40; 
+                
+                group.add(line); group.add(nodes); group.add(label);
+                group.userData.worldPosition = centroid.clone();
+                group.position.copy(centroid); 
+                
+                constellationGroups.push(group); skyDome.add(group);
+            });
+        }
+        createRealConstellations();
+
+        // ================= 5. 鼠标交互与 【完全锐利的 HUD 直显算法】 =================
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        raycaster.params.Line.threshold = 20; raycaster.params.Points.threshold = 20;
+
+        const tooltip = document.getElementById('hover-tooltip');
+        const tooltipTitle = document.getElementById('tooltip-title');
+        const mask = document.getElementById('telescope-mask'); 
+        const manuscript = document.getElementById('focus-manuscript'); 
+        const manuTitle = document.getElementById('manu-title');
+        const manuSubtitle = document.getElementById('manu-subtitle');
+        const manuText = document.getElementById('manu-text');
+        const mainUI = document.getElementById('main-ui');
+        const castle = document.getElementById('castle-silhouette');
+        const sceneWhisper = document.getElementById('scene-whisper');
+
+        window.addEventListener('mousemove', (event) => {
+            if(isFocused) return; 
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            tooltip.style.left = (event.clientX + 20) + 'px'; tooltip.style.top = (event.clientY + 20) + 'px';
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(constellationGroups, true);
+
+            if (intersects.length > 0) {
+                const selectedGroup = intersects[0].object.parent;
+                if (hoveredConstellation !== selectedGroup) {
+                    hoveredConstellation = selectedGroup; hoveredConstellation.userData.isHovered = true; document.body.style.cursor = 'pointer';
+                    tooltipTitle.innerText = hoveredConstellation.userData.name;
+                    tooltip.classList.add('visible');
+                }
+            } else {
+                if (hoveredConstellation) {
+                    hoveredConstellation.userData.isHovered = false; hoveredConstellation = null; document.body.style.cursor = 'default';
+                    tooltip.classList.remove('visible'); 
+                }
+            }
+        });
+
+        window.addEventListener('click', () => {
+            if(!isFocused && hoveredConstellation) focusTelescope(hoveredConstellation);
+        });
+
+        function focusTelescope(group) {
+            isFocused = true;
+            tooltip.classList.remove('visible'); document.body.style.cursor = 'default';
+            
+            manuTitle.innerText = group.userData.name;
+            manuSubtitle.innerText = group.userData.title;
+            manuText.innerText = group.userData.desc;
+
+            mainUI.style.opacity = '0';
+            castle.style.opacity = '0'; 
+            mask.classList.add('active'); 
+            manuscript.classList.add('active'); 
+
+            // 1. 让主相机转过去看着星座 (给背景垫底)
+            const targetWorldPos = new THREE.Vector3();
+            group.getWorldPosition(targetWorldPos);
+            controls.enabled = false;
+            
+            const dir = targetWorldPos.clone().normalize();
+            const rightVector = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+            const lookAtPos = targetWorldPos.clone().add(rightVector.multiplyScalar(65));
+            
+            new TWEEN.Tween(controls.target)
+                .to({ x: lookAtPos.x, y: lookAtPos.y, z: lookAtPos.z }, 1000)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .onUpdate(() => { controls.update(); })
+                .start();
+
+            // 2. 【核心】：在完全没有雾气、没有距离缩放的 hudScene 中生成一个绝对清晰的克隆！
+            group.visible = false; // 隐藏主场景那个
+
+            currentHudObject = new THREE.Group();
+            const hudGeo = new THREE.BufferGeometry().setFromPoints(group.userData.localPoints);
+            
+            // 【关键设置】：关闭 fog，设置 depthTest: false 保证最高优先级和绝对清晰度！
+            const hudLineMat = new THREE.LineBasicMaterial({ color: 0xffe699, transparent: true, opacity: 0, fog: false, depthTest: false, linewidth: 2 });
+            const hudNodeMat = new THREE.PointsMaterial({ size: 16, map: createStarTexture('255, 240, 180'), transparent: true, opacity:0, blending: THREE.AdditiveBlending, fog: false, depthTest: false, sizeAttenuation: false });
+            
+            const hudLine = new THREE.Line(hudGeo, hudLineMat);
+            const hudNodes = new THREE.Points(hudGeo, hudNodeMat);
+            
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            ctx.font = "Bold 36px 'Caveat', cursive"; ctx.fillStyle = "rgba(252, 235, 196, 1.0)"; ctx.fillText(group.userData.name, 10, 50);
+            const hudLabel = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity:0, fog: false, depthTest: false }));
+            
+            // 文本稍微居中下方
+            hudLabel.scale.set(40, 20, 1);
+            hudLabel.position.copy(group.userData.localPoints[0]).normalize().multiplyScalar(50);
+            hudLabel.position.y += 10;
+            
+            currentHudObject.add(hudLine); currentHudObject.add(hudNodes); currentHudObject.add(hudLabel);
+            
+            // 完美对齐：将 HUD 直接贴在 hudCamera 的前面 (-100单位)
+            const hudDist = -100;
+            const visibleHeight = 2 * Math.tan((defaultFOV * Math.PI / 180) / 2) * Math.abs(hudDist);
+            const visibleWidth = visibleHeight * (window.innerWidth / window.innerHeight);
+            
+            // 动态缩放比例，保证占满屏幕高度的 35%
+            const desiredSize = visibleHeight * 0.35;
+            const scaleFactor = desiredSize / (group.userData.boundingRadius * 2);
+            currentHudObject.scale.setScalar(scaleFactor);
+
+            // 让 HUD 偏移到左侧 35%
+            currentHudObject.position.set(-visibleWidth * 0.15, 0, hudDist);
+
+            // 【关键】：将克隆体添加到完全独立的 hudScene
+            hudScene.add(currentHudObject);
+
+            new TWEEN.Tween(hudLineMat).to({ opacity: 0.8 }, 1000).delay(500).start();
+            new TWEEN.Tween(hudNodeMat).to({ opacity: 1.0 }, 1000).delay(500).start();
+            new TWEEN.Tween(hudLabel.material).to({ opacity: 1.0 }, 1000).delay(500).start();
+                
+            starMaterials.forEach(m => { new TWEEN.Tween(m).to({ opacity: 0.1 }, 1000).start(); });
+            constellationGroups.forEach(g => {
+                if(g !== group) {
+                    const lMat = g.children[0].material; 
+                    new TWEEN.Tween(lMat).to({ opacity: 0.02 }, 1000).start();
+                }
+            });
+        }
+
+        window.exitFocus = function() {
+            manuscript.classList.remove('active');
+            mask.classList.remove('active'); 
+            mainUI.style.opacity = '1';
+            castle.style.opacity = '1';
+
+            if(currentHudObject) {
+                new TWEEN.Tween(currentHudObject.children[0].material).to({ opacity: 0 }, 500).start();
+                new TWEEN.Tween(currentHudObject.children[1].material).to({ opacity: 0 }, 500).start();
+                new TWEEN.Tween(currentHudObject.children[2].material).to({ opacity: 0 }, 500).onComplete(()=>{
+                    hudScene.remove(currentHudObject); // 清理 HUD
+                    currentHudObject = null;
+                }).start();
+            }
+
+            setTimeout(() => {
+                if(hoveredConstellation) hoveredConstellation.visible = true; // 恢复背景里的
+                hoveredConstellation = null;
+            }, 500);
+
+            new TWEEN.Tween(controls.target)
+                .to({ x: defaultTarget.x, y: defaultTarget.y, z: defaultTarget.z }, 1500)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .onComplete(() => { controls.enabled = true; isFocused = false; })
+                .start();
+
+            const targetStarOpacity = timeState === 'Night' ? 0.9 : (timeState === 'Day' ? 0.05 : 0.3);
+            starMaterials.forEach(m => { new TWEEN.Tween(m).to({ opacity: m.size === 6 ? targetStarOpacity * 0.5 : targetStarOpacity }, 1000).start(); });
+            constellationGroups.forEach(g => {
+                const lMat = g.children[0].material; new TWEEN.Tween(lMat).to({ opacity: timeState === 'Night' ? 0.45 : 0.08 }, 1000).start();
+            });
+        }
+
+        // ================= 6. Voxel 像素云系统 =================
+        let weatherParticles; let cloudGroups =[]; 
+        const cloudMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
+
+        function createMinecraftCloud() {
+            const group = new THREE.Group(); const blockSize = 60; const boxGeo = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+            const numBlocks = Math.floor(Math.random() * 8) + 5; 
+            for(let i=0; i<numBlocks; i++) {
+                const mesh = new THREE.Mesh(boxGeo, cloudMaterial);
+                mesh.position.set(Math.floor((Math.random() - 0.5) * 4) * blockSize, 0, Math.floor((Math.random() - 0.5) * 4) * blockSize);
+                group.add(mesh);
+            }
+            return group;
+        }
+
+        function initWeatherSystem() {
+            const wGeo = new THREE.BufferGeometry(); const posArray = new Float32Array(5000 * 3);
+            for(let i=0; i<15000; i+=3) { posArray[i] = (Math.random()-0.5)*1200; posArray[i+1] = Math.random()*1200; posArray[i+2] = (Math.random()-0.5)*1200; }
+            wGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            weatherParticles = new THREE.Points(wGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 2, transparent: true, opacity: 0 }));
+            scene.add(weatherParticles);
+
+            for(let i=0; i<35; i++) {
+                const cloud = createMinecraftCloud();
+                cloud.position.set( (Math.random()-0.5)*2500, 350 + Math.random()*200, (Math.random()-0.5)*2500 );
+                cloudGroups.push(cloud); scene.add(cloud);
+            }
+        }
+        initWeatherSystem();
+
+        // ================= 7. 渲染循环与 【Multi-Pass 渲染】 =================
+        let currentRot = 0, rotInterval = null;
+        let currentWeatherType = 'Clear'; 
+        let timeState = 'Night'; 
+
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update(); 
+            if(!isFocused) controls.update(); 
+            
+            if(currentWeatherType !== 'Clear' && currentWeatherType !== 'Fog') {
+                const pos = weatherParticles.geometry.attributes.position.array;
+                const speed = currentWeatherType === 'Rain' ? 22 : 3;
+                for(let i=1; i<pos.length; i+=3) {
+                    pos[i] -= speed; pos[i-1] += (currentWeatherType==='Snow'? Math.sin(Date.now()*0.001+i)*1.5 : 0);
+                    if(pos[i] < -50) { pos[i] = 1000 + Math.random()*200; pos[i-1] = (Math.random()-0.5)*1200; }
+                }
+                weatherParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            cloudGroups.forEach(cloud => { cloud.position.x -= 0.6; if(cloud.position.x < -1500) cloud.position.x = 1500; });
+
+            if(!isFocused) {
+                constellationGroups.forEach(group => {
+                    const targetScale = group.userData.isHovered ? 1.3 : 1.0; 
+                    group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
+                    const lineMat = group.children[0].material;
+                    const baseOpacity = timeState === 'Night' ? 0.45 : 0.08;
+                    const targetOpacity = group.userData.isHovered ? 1.0 : baseOpacity; 
+                    lineMat.opacity += (targetOpacity - lineMat.opacity) * 0.15;
+                });
+                skyDome.rotation.y += 0.0001; 
+            } else {
+                // 让镜筒里的星座微微立体旋转，非常有高级感
+                if(currentHudObject) currentHudObject.rotation.y += 0.0008; 
+            }
+
+            // 【核心渲染】：先清空背景，渲染主场景，然后不清除深度缓冲直接叠加渲染 HUD！
+            renderer.clear();
+            renderer.render(scene, camera);
+            renderer.clearDepth();
+            renderer.render(hudScene, hudCamera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => { 
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); 
+            hudCamera.aspect = window.innerWidth/window.innerHeight; hudCamera.updateProjectionMatrix(); 
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+            renderer.setPixelRatio(window.devicePixelRatio);
+        });
+
+        // ================= 8. 四时流转逻辑 =================
+        function updateVisuals() {
+            const castleImg = document.getElementById('castle-silhouette');
+            const gridOpacity = timeState === 'Night' ? 1.0 : (timeState === 'Day' ? 0.42 : 0.7);
+            
+            document.querySelectorAll('.sky-layer').forEach(el => el.style.opacity = '0');
+            document.getElementById(`sky-${timeState.toLowerCase()}`).style.opacity = '1';
+
+            if(timeState === 'Day') {
+                scene.fog.color.setHex(0xd8eeff);
+                starMaterials.forEach(m => m.opacity = 0.0); 
+                ambientLight.intensity = 1.0; ambientLight.color.setHex(0xaaccff);
+                directionalLight.intensity = 1.2; directionalLight.color.setHex(0xffffff);
+                castleImg.style.filter = "brightness(0.9) contrast(1.1) saturate(1.2)"; 
+            } else if (timeState === 'Dawn' || timeState === 'Dusk') {
+                scene.fog.color.setHex(timeState === 'Dawn' ? 0xdf9c82 : 0xc46a56);
+                starMaterials.forEach(m => m.opacity = 0.3); 
+                ambientLight.intensity = 0.6; ambientLight.color.setHex(0x533457);
+                directionalLight.intensity = 0.8; directionalLight.color.setHex(0xffaa88);
+                castleImg.style.filter = "brightness(0.5) contrast(1.1) sepia(0.2)"; 
+            } else { 
+                scene.fog.color.setHex(0x152238);
+                starMaterials[0].opacity = 0.5; starMaterials[1].opacity = 0.9; starMaterials[2].opacity = 0.8; starMaterials[3].opacity = 0.8;
+                ambientLight.intensity = 0.4; ambientLight.color.setHex(0x3a5078);
+                directionalLight.intensity = 0.6; directionalLight.color.setHex(0x6a8abc);
+                // 夜晚调整：不再黑漆漆，更明亮，呈现漂亮的蓝紫色月光感
+                castleImg.style.filter = "brightness(0.4) contrast(1.2) sepia(0.3) hue-rotate(190deg)"; 
+            }
+
+            const mat = weatherParticles.material;
+            if (currentWeatherType === 'Clear') { mat.opacity = 0; scene.fog.density = 0.001; } 
+            else if (currentWeatherType === 'Fog') { mat.opacity = 0; scene.fog.density = 0.004; } 
+            else if (currentWeatherType === 'Rain') { mat.opacity = 0.6; mat.size = 1.5; mat.color.setHex(timeState==='Day' ? 0x8cb1d9 : 0x5a7ca6); scene.fog.density = 0.003; } 
+            else if (currentWeatherType === 'Snow') { mat.opacity = 0.8; mat.size = 3.5; mat.color.setHex(0xffffff); scene.fog.density = 0.002; }
+
+            if(currentWeatherType === 'Clear') {
+                cloudGroups.forEach((c, idx) => c.visible = (idx % 3 === 0)); cloudMaterial.color.setHex(0xffffff);
+            } else {
+                cloudGroups.forEach(c => c.visible = true); cloudMaterial.color.setHex(currentWeatherType === 'Rain' ? 0x556677 : 0xffffff);
+            }
+
+            celestialGridMaterials.forEach(material => {
+                material.opacity = material.opacity * 0 + (
+                    material.color && material.color.getHex() === 0xf0c76b
+                        ? 0.62 * gridOpacity
+                        : material.color && material.color.getHex() === 0xbdd7ff
+                            ? 0.58 * gridOpacity
+                            : material.color && material.color.getHex() === 0x9bbef2
+                                ? 0.24 * gridOpacity
+                                : material.color && material.color.getHex() === 0x7d9fcb
+                                    ? 0.34 * gridOpacity
+                                    : 0.78 * gridOpacity
+                );
+            });
+        }
+
+        function updateSceneWhisper() {
+            const copyMap = {
+                Night: {
+                    Clear: 'Moonlight drifts across the far towers and the sky keeps its counsel.',
+                    Rain: 'Rain needles the dark stone while the tower listens in silence.',
+                    Snow: 'Snow gathers on the parapets until the whole keep glows pale.',
+                    Fog: 'Mist swallows the lower roofs and leaves only the highest spires awake.'
+                },
+                Dawn: {
+                    Clear: 'The first gold gathers on the battlements before the world below stirs.',
+                    Rain: 'A soft storm passes through the dawn and turns the keep to silver.',
+                    Snow: 'Morning light catches in the snow and the castle exhales slowly.',
+                    Fog: 'Dawn presses through the haze and sketches the castle back into being.'
+                },
+                Day: {
+                    Clear: 'Bright air hangs over the stone heights and every tower stands watchful.',
+                    Rain: 'Cloud-shadow and rain move over the roofs like a passing omen.',
+                    Snow: 'Even under daylight, the snowy towers feel lifted out of time.',
+                    Fog: 'The day remains hushed, with the lower valley lost beneath white cloud.'
+                },
+                Dusk: {
+                    Clear: 'The last amber light settles on the keep before the stars return.',
+                    Rain: 'Dusk darkens the rain and the castle windows begin to answer back.',
+                    Snow: 'Twilight folds into the snow until the whole ridge turns luminous.',
+                    Fog: 'At dusk the mist climbs higher, and the castle becomes a rumor of stone.'
+                }
+            };
+            const stateCopy = copyMap[timeState] || copyMap.Night;
+            sceneWhisper.textContent = stateCopy[currentWeatherType] || stateCopy.Clear;
+        }
+
+        // ================= 9. 真实数据同步 =================
+        function getTimeState(hour) {
+            if(hour >= 5 && hour < 7) return 'Dawn';
+            if(hour >= 7 && hour < 17) return 'Day';
+            if(hour >= 17 && hour < 19) return 'Dusk';
+            return 'Night';
+        }
+
+        function describeWeatherCode(code) {
+            if(code === 0) return 'Clear';
+            if(code === 1) return 'Mostly Clear';
+            if(code === 2) return 'Partly Cloudy';
+            if(code === 3) return 'Overcast';
+            if(code === 45 || code === 48) return 'Fog';
+            if(code >= 51 && code <= 57) return 'Drizzle';
+            if(code >= 61 && code <= 67) return 'Rain';
+            if(code >= 71 && code <= 77) return 'Snow';
+            if(code >= 80 && code <= 82) return 'Rain Showers';
+            if(code === 85 || code === 86) return 'Snow Showers';
+            if(code >= 95 && code <= 99) return 'Thunderstorm';
+            return 'Clear';
+        }
+
+        function getWeatherVisualType(code) {
+            if(code === 45 || code === 48) return 'Fog';
+            if((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)) return 'Rain';
+            if((code >= 71 && code <= 77) || code === 85 || code === 86) return 'Snow';
+            return 'Clear';
+        }
+
+        function getZonedTimeParts(timeZone) {
+            const formatter = new Intl.DateTimeFormat('en-GB', {
+                timeZone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(new Date());
+            const hour = Number(parts.find(part => part.type === 'hour')?.value || 0);
+            const minute = parts.find(part => part.type === 'minute')?.value || '00';
+            return { hour, timeStr: `${String(hour).padStart(2, '0')}:${minute}` };
+        }
+
+        async function loadRealTimeData() {
+            try {
+                const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                const ipData = await ipRes.json();
+                const lat = Number(ipData.latitude); const lon = Number(ipData.longitude); const tz = ipData.timezone || 'UTC';
+
+                const targetRotation = (90 - lat) * (Math.PI / 180);
+                if(rotInterval) clearInterval(rotInterval);
+                rotInterval = setInterval(() => { currentRot += (targetRotation - currentRot) * 0.05; skyDome.rotation.x = currentRot; if(Math.abs(targetRotation - currentRot) < 0.001) clearInterval(rotInterval); }, 30);
+
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const weatherData = await weatherRes.json(); const cur = weatherData.current_weather;
+                if(!cur) throw new Error('Missing current_weather payload');
+                const { hour } = getZonedTimeParts(tz);
+                timeState = getTimeState(hour);
+
+                const weatherCode = cur?.weathercode ?? 0;
+                currentWeatherType = getWeatherVisualType(weatherCode);
+
+                document.getElementById('loading').style.display = 'none';
+                updateVisuals();
+                updateSceneWhisper();
+
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('loading').innerHTML = "The veil remains still";
+                updateSceneWhisper();
+            }
+        }
+
+        updateVisuals();
+        updateSceneWhisper();
+        loadRealTimeData();
+
+    </script>
+</body>
+</html>
